@@ -1,0 +1,20 @@
+** sch_path: /foss/designs/GMoverID/Schematics/NMOSchar.sch
+**.subckt NMOSchar
+Vgs VG GND VGSvalue
+VDS VD GND VDSvalue
+XM1 VD VG GND GND sky130_fd_pr__nfet_01v8 L=TranL W=TranW nf=1 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29'
++ pd='2*int((nf+1)/2) * (W/nf + 0.29)' ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W'
++ sa=0 sb=0 sd=0 mult=1 m=1
+**** begin user architecture code
+
+.param mc_mm_switch=0
+.param mc_pr_switch=0
+.include /foss/pdk/sky130A/libs.tech/ngspice/corners/tt.spice
+.include /foss/pdk/sky130A/libs.tech/ngspice/r+c/res_typical__cap_typical.spice
+.include /foss/pdk/sky130A/libs.tech/ngspice/r+c/res_typical__cap_typical__lin.spice
+.include /foss/pdk/sky130A/libs.tech/ngspice/corners/tt/specialized_cells.spice
+
+**** end user architecture code
+**.ends
+.GLOBAL GND
+.end
