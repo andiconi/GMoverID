@@ -4,18 +4,19 @@ import math
 import shutil
 import os
 import pandas as pd
+#LOW Vthreshold Version
 #This file will do a complete charecterization of a typical NMOS and PMOS Charecterization circuit
 print("Ensure No Spice in XSchem Schematic")
-shutil.copy("Tables/Table.csv", "Tables/out.csv")
-Table = pd.read_csv("Tables/out.csv")
+shutil.copy("Tables/Table.csv", "Tables/outLVT.csv")
+Table = pd.read_csv("Tables/outLVT.csv")
 
 # USER Varibles (Can be changed maunally or at every run)
 # desiredValue = float(input("Enter Desired GM/ID: "))
 # calculatedgm = float(input("Enter Calculated GM (10^-6): "))
 # transistorL = float(input("Enter Transistor Length (10^-6): "))
-desiredValue = 15
+desiredValue = 12
 calculatedgm = 314.16
-transistorL = 0.26
+transistorL = 0.36
 
 #quick calculations
 vstar = 2/desiredValue
@@ -44,13 +45,13 @@ Table.loc[5, 'PMOS'] = str(round(Biascurrent, 3)) + " uA"
 
 sweep = "dc vgs 0.05 1.8 0.001"
 
-FILENAME = "Netlists/NMOSchar.spice"
+FILENAME = "Netlists/NMOSlvtchar.spice"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[gm]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[w]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[w]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -99,18 +100,18 @@ ngspyce.source('temp.spice')
 
 #run ngspice sweep. This library runs ngspice in interactive mode. .save commands do not work hence the netlist editing
 ngspyce.cmd(sweep)
-ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8[gm]")
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8[id]")
-ngspyce.cmd("w = @m.xm1.msky130_fd_pr__nfet_01v8[w]")
+ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]")
+ngspyce.cmd("w = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[w]")
 ngspyce.cmd("gmoid = gm/id")
 ngspyce.cmd("JW = id/w")
-ngspyce.cmd("write Simulations/JWsim.raw all")
+ngspyce.cmd("write Simulations/LVT/JWsim.raw all")
 
 #obtain vectors
 VGS = ngspyce.vector('v(v-sweep)')
-GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[gm]')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[id]')
-W = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[w]')
+GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]')
+W = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[w]')
 
 #caculate other vectors
 GMOID = GM / ID
@@ -136,8 +137,8 @@ sweep = "dc vgs 0.05 1.8 0.001"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[gm]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -190,14 +191,14 @@ ngspyce.source("temp.spice")
 ngspyce.cmd(sweep)
 
 #additional commands
-ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8[gm]")
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8[id]")
-ngspyce.cmd("write Simulations/vgssim.raw all")
+ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]")
+ngspyce.cmd("write Simulations/LVT/vgssim.raw all")
 
 #obtain vectors
 VGS = ngspyce.vector('v(v-sweep)')
-GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[gm]')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[id]')
+GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]')
 
 # find value of vgs at bias current
 index = np.argmin(np.abs(np.array(ID)-(Biascurrent*1e-06)))
@@ -219,9 +220,9 @@ sweep = "dc vds 0.05 1.8 0.001"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[gm]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[gds]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gds]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -273,17 +274,17 @@ ngspyce.source("temp.spice")
 ngspyce.cmd(sweep)
 
 #Additional commands
-ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8[gm]")
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8[id]")
-ngspyce.cmd("gds = @m.xm1.msky130_fd_pr__nfet_01v8[gds]")
+ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]")
+ngspyce.cmd("gds = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[gds]")
 ngspyce.cmd("ro = 1/gds")
-ngspyce.cmd("write Simulations/vdssim.raw all")
+ngspyce.cmd("write Simulations/LVT/vdssim.raw all")
 
 #obtain vectors
 VDS = ngspyce.vector('v(v-sweep)')
-GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[gm]')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[id]')
-GDS = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[gds]')
+GM = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[gm]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]')
+GDS = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[gds]')
 #caculate other vectors
 ro = 1 / GDS
 
@@ -312,10 +313,10 @@ sweep = "tran 10ns 50us"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[cgs]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[cgd]\n",
-".save @m.xm1.msky130_fd_pr__nfet_01v8[cgg]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgs]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgd]\n",
+".save @m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgg]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -366,14 +367,14 @@ ngspyce.source("temp.spice")
 
 #run ngspice sweep, inserting the code in the netlist wont run ngspice
 ngspyce.cmd(sweep)
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8[id]")
-ngspyce.cmd("cgs = @m.xm1.msky130_fd_pr__nfet_01v8[cgs]")
-ngspyce.cmd("cgd = @m.xm1.msky130_fd_pr__nfet_01v8[cgd]")
-ngspyce.cmd("write Simulations/Tran.raw all")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[id]")
+ngspyce.cmd("cgs = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgs]")
+ngspyce.cmd("cgd = @m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgd]")
+ngspyce.cmd("write Simulations/LVT/Tran.raw all")
 #obtain vectors
-CGS = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[cgs]')
-CGD = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[cgd]')
-CGG = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8[cgg]')
+CGS = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgs]')
+CGD = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgd]')
+CGG = ngspyce.vector('@m.xm1.msky130_fd_pr__nfet_01v8_lvt[cgg]')
 #Estimate FT through capacitences
 FT = (calculatedgm * 1e-6)/(2*math.pi*(abs(CGD[200])+abs(CGS[200]))) * 1e-9
 print("CGG of NMOS = " + str(round(abs(CGG[200] * 1e15) ,3))+ " fF")
@@ -399,15 +400,15 @@ print("\n")
 #             JW Section                 #
 ##########################################
 
-FILENAME = "Netlists/PMOSchar.spice"
+FILENAME = "Netlists/PMOSlvtchar.spice"
 sweep = "dc vsg 0.05 1.8 0.001"
 
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[gm]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[w]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[w]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -457,18 +458,18 @@ ngspyce.source("temp.spice")
 
 #run ngspice sweep
 ngspyce.cmd(sweep)
-ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__pfet_01v8[gm]")
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8[id]")
-ngspyce.cmd("w = @m.xm1.msky130_fd_pr__pfet_01v8[w]")
+ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]")
+ngspyce.cmd("w = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[w]")
 ngspyce.cmd("jw = id/w")
 ngspyce.cmd("gmoid = gm/id")
-ngspyce.cmd("write Simulations/pJWsim.raw all")
+ngspyce.cmd("write Simulations/LVT/pJWsim.raw all")
 
 #obtain vectors
 VDS = ngspyce.vector('v(v-sweep)')
-GM = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[gm]')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[id]')
-W = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[w]')
+GM = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]')
+W = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[w]')
 
 GMOID = GM/ID
 JW = ID/W
@@ -495,8 +496,8 @@ sweep = "dc vsg 0.05 1.8 0.001"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[gm]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -549,14 +550,14 @@ ngspyce.source("temp.spice")
 ngspyce.cmd(sweep)
 
 #additional commands
-ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__pfet_01v8[gm]")
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8[id]")
-ngspyce.cmd("write Simulations/pvgssim.raw all")
+ngspyce.cmd("gm = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]")
+ngspyce.cmd("write Simulations/LVT/pvgssim.raw all")
 
 #obtain vectors
 VSG = ngspyce.vector('v(v-sweep)')
-GM = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[gm]')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[id]')
+GM = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[gm]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]')
 
 os.remove("temp.spice") 
 
@@ -575,8 +576,8 @@ sweep = "dc vsd 0.05 1.8 0.001"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[gds]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gds]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -627,15 +628,15 @@ ngspyce.source("temp.spice")
 
 #run ngspice sweep, inserting the code in the netlist wont run ngspice
 ngspyce.cmd(sweep)
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8[id]")
-ngspyce.cmd("gds = @m.xm1.msky130_fd_pr__pfet_01v8[gds]")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]")
+ngspyce.cmd("gds = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[gds]")
 ngspyce.cmd("ro = 1/gds")
-ngspyce.cmd("write Simulations/pvds.raw all")
+ngspyce.cmd("write Simulations/LVT/pvds.raw all")
 
 #obtain vectors
 VSD = ngspyce.vector('v(v-sweep)')
-ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[id]')
-GDS = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[gds]')
+ID = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]')
+GDS = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[gds]')
 #caculate other vectors
 ro = 1 / GDS
 
@@ -665,10 +666,10 @@ sweep = "tran 10ns 50us"
 #must end in a \n
 commands = [
 "."+ sweep +"\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[id]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[cgs]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[cgd]\n",
-".save @m.xm1.msky130_fd_pr__pfet_01v8[cgg]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgs]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgd]\n",
+".save @m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgg]\n",
 ".save v(vg) v(v-sweep) v(vd)\n"
 ]
 
@@ -719,14 +720,14 @@ ngspyce.source("temp.spice")
 
 #run ngspice sweep, inserting the code in the netlist wont run ngspice
 ngspyce.cmd(sweep)
-ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8[id]")
-ngspyce.cmd("cgs = @m.xm1.msky130_fd_pr__pfet_01v8[cgs]")
-ngspyce.cmd("cgd = @m.xm1.msky130_fd_pr__pfet_01v8[cgd]")
-ngspyce.cmd("write Simulations/pTran.raw all")
+ngspyce.cmd("id = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[id]")
+ngspyce.cmd("cgs = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgs]")
+ngspyce.cmd("cgd = @m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgd]")
+ngspyce.cmd("write Simulations/LVT/pTran.raw all")
 #obtain vectors
-CSG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[cgs]')
-CDG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[cgd]')
-CGG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8[cgg]')
+CSG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgs]')
+CDG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgd]')
+CGG = ngspyce.vector('@m.xm1.msky130_fd_pr__pfet_01v8_lvt[cgg]')
 FT = (calculatedgm * 1e-6)/(2*math.pi*(abs(CDG[200])+abs(CSG[200]))) * 1e-9
 
 print("CGG of PMOS = " + str(round(abs(CGG[200] * 1e15) ,3))+ " fF")
@@ -740,5 +741,5 @@ Table.loc[14, 'PMOS'] = str(round(abs(CDG[200] * 1e15) ,3))+ " fF"
 Table.loc[15, 'PMOS'] = str(round(FT ,3))+ " GHz"
 os.remove("temp.spice") 
 
-Table.to_csv("Tables/out.csv", index=False)
-print("Done. View Charecterization in Tables/out.csv")
+Table.to_csv("Tables/outLVT.csv", index=False)
+print("Done. View Charecterization in Tables/outLVT.csv")

@@ -1,8 +1,8 @@
-** sch_path: /foss/designs/GMoverID/Schematics/NMOSchar.sch
-**.subckt NMOSchar
+** sch_path: /foss/designs/GMoverID/Schematics/NMOSlvtchar.sch
+**.subckt NMOSlvtchar
 Vgs VG GND dc VGSvalue ac 1 0
 VDS VD GND VDSvalue
-XM1 VD VG GND GND sky130_fd_pr__nfet_01v8 L=TranL W=TranW nf=1 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29'
+XM1 VD VG GND GND sky130_fd_pr__nfet_01v8_lvt L=TranL W=TranW nf=1 ad='int((nf+1)/2) * W/nf * 0.29' as='int((nf+2)/2) * W/nf * 0.29'
 + pd='2*int((nf+1)/2) * (W/nf + 0.29)' ps='2*int((nf+2)/2) * (W/nf + 0.29)' nrd='0.29 / W' nrs='0.29 / W'
 + sa=0 sb=0 sd=0 mult=1 m=1
 **** begin user architecture code
